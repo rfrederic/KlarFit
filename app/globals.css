@@ -2,26 +2,91 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
+  /* Native app feel: momentum scrolling on iOS, no rubber-band pull-to-refresh. */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #0a0a0a;
+  color: #f2f2f0;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  /* Safe-area insets for notched/rounded-corner phones (requires viewport-fit=cover). */
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Removes the legacy 300ms tap delay / double-tap-to-zoom on touch devices. */
+a,
+button,
+input,
+select,
+textarea,
+[role="button"],
+[role="tab"] {
+  touch-action: manipulation;
+}
+
+/* Visible focus rings everywhere for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #d7ff1e;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .overflow-y-auto,
+  .overflow-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Horizontally scrollable filter chip rows (mobile-first) with the
+     scrollbar hidden — the chips themselves are the only affordance needed. */
+  .chip-scroll {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .chip-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Printable workout plan: hide site chrome, force light-on-white for paper */
+@media print {
+  header,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0a0a0a !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  * {
+    box-shadow: none !important;
+    color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  a {
+    color: #0a0a0a !important;
+    text-decoration: underline;
   }
 }
