@@ -15,7 +15,7 @@ export default function OfflinePage() {
       </h1>
       <p className="mt-4 max-w-md text-muted">
         This page hasn&apos;t been saved for offline use yet. Reconnect to load it, or go back to a
-        page you&apos;ve already visited — those still work without a connection.
+        page you&apos;ve already visited those still work without a connection.
       </p>
       <div className="mt-8">
         <LinkButton href="/">Back to Home</LinkButton>

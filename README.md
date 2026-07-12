@@ -31,13 +31,13 @@ app/                      Routes (App Router)
   about/, contact/        Static pages
 components/
   layout/                 Header, Footer
-  ui/                      Button, Badge, Container, SectionHeading, Modal
+  ui/                      Button, Badge, Container, SectionHeading, Modal, RotationToggle
   home/                    Hero, HowItWorks, FeaturedExercises
   exercises/               ExerciseCard, ExerciseGrid, ExerciseFilters, ExerciseImage
   quiz/                    QuizContainer, QuizProgressBar, steps/*
   plan/                    WeeklyPlanView, DayCard, DownloadPlanButton
   program/                 DayTabs, ProgramDayView, ProgramSectionCard, ExerciseRow,
-                           ExercisePickerModal, SwapAlternateModal, WeekToggle, UndoToast
+                           ExercisePickerModal, SwapAlternateModal, UndoToast
 data/
   exercises.ts            Single source of truth for all 228 exercises
   defaultProgram.ts       Seed data for My Program (my personal weekly split)
@@ -45,8 +45,8 @@ lib/
   types.ts                Shared TypeScript types
   planGenerator.ts        Rule-based weekly plan generator
   repsRecommendations.ts  Sets/reps/rest recommendations per goal (see below)
-  exerciseAlternates.ts   Movement-pattern classifier + alternate-exercise matching
-  weekRotation.ts         Resolves a program exercise for the active week (A/B)
+  exerciseAlternates.ts   Movement-pattern classifier + alternate-exercise matching + daily cadence
+  exerciseRotation.ts     Resolves a program/plan exercise for the active rotation variant (A/B)
   storage.ts              localStorage helpers for quiz answers + plan
   program.ts              localStorage helpers for the editable program + checkbox state
 ```
@@ -60,9 +60,10 @@ exercise via a picker modal that searches `data/exercises.ts` or accepts a free-
 edit sets/reps inline, reorder exercises with up/down arrows, and add or remove whole sections.
 Exercises that exist in the library link to their detail page; custom entries render as plain text.
 A "Checkbox Mode" toggle adds a checkbox to every exercise for ticking off sets while training (state
-saved under `userProgram:checks`, with a "Clear Today" button for the active day), and "Reset to
-Default" restores the original seed program. A Week A/Week B toggle sits above the day's exercises —
-see "Weekly exercise rotation" below for how exercises rotate and how sets/reps get pre-filled.
+saved under `userProgram:checks`, with a live completion percentage next to the toggle and a "Clear
+Today" button for the active day), and "Reset to Default" restores the original seed program. A
+Variant A/Variant B toggle sits above the day's exercises — see "Daily exercise rotation" below for
+how exercises rotate every 24 hours and how sets/reps get pre-filled.
 
 ## Editing the exercise library
 
@@ -174,9 +175,10 @@ with all three goals side by side; if the visitor has saved quiz answers, their 
 highlighted in lime. The My Program exercise picker (`app/my-program/MyProgramClient.tsx`) uses the
 same function to pre-fill sets/reps for the user's own goal instead of a generic "3 × 10" default.
 
-## Weekly exercise rotation
+## Daily exercise rotation
 
-My Program alternates exercises week to week so training doesn't go stale. Two files drive it:
+Both My Plan and My Program alternate exercises every 24 hours so training doesn't go stale. Three
+files drive it:
 
 - `lib/exerciseAlternates.ts` classifies every exercise into a `MovementPattern` (e.g.
   `horizontalPush` for bench-press-family lifts vs. `verticalPush` for overhead presses — both can
@@ -185,22 +187,37 @@ My Program alternates exercises week to week so training doesn't go stale. Two f
   library to exercises that share that movement pattern **and** a muscle sub-tag, are the same
   difficulty or easier, and (when the user's quiz equipment is known) prefer equipment they actually
   have — ties break alphabetically by id, so the same exercise always resolves to the same swap,
-  never a random one. If nothing qualifies, the exercise simply stays the same both weeks.
-- `getCurrentProgramWeek()` derives "Week A" vs. "Week B" from the ISO 8601 week number (even = A,
-  odd = B) — no extra state to store, it's just a function of today's date. `WeekToggle` shows the
-  current week and has a manual button to preview the other one without changing what's "current".
-- `lib/weekRotation.ts`'s `resolveProgramExercise()` ties it together per row: Week A always shows
-  the user's base exercise; Week B shows the auto-picked (or manually overridden) alternate unless
-  the exercise is locked. Sets carry over unchanged; reps are re-derived via
-  `repsRecommendations.getRecommendation()` only when the swap crosses the rep-based/time-based
-  line (e.g. Lat Pulldown ↔ Dead Hang), so "10 reps" doesn't show up on a hold.
+  never a random one. If nothing qualifies, the exercise simply stays the same on both variants.
+- `getCurrentRotationVariant()` derives "Variant A" vs. "Variant B" from the local calendar day
+  (even day number = A, odd = B) — no extra state to store, it flips once every 24 hours purely as a
+  function of today's date. `components/ui/RotationToggle.tsx` shows which variant is active today
+  and has a manual button to preview the other one without changing what's actually "today".
+- `lib/exerciseRotation.ts` ties it together per exercise, for both pages:
+  - `resolveProgramExercise()` (My Program): Variant A always shows the user's base exercise; Variant
+    B shows the auto-picked (or manually overridden) alternate unless the exercise is locked.
+  - `resolvePlanExercise()` (My Plan): same rules applied to the quiz-generated plan's exercises at
+    render time — the saved plan itself is never mutated, so retaking the quiz doesn't interact with
+    rotation at all, and there's no lock/manual-override concept since the plan isn't per-exercise
+    editable.
+  - Both re-derive reps via `repsRecommendations.getRecommendation()` only when a swap crosses the
+    rep-based/time-based line (e.g. Lat Pulldown ↔ Dead Hang), so "10 reps" doesn't show up on a
+    hold — `DayCard` also swaps the unit label itself ("reps" vs. "hold") to match.
 
 Each exercise row in My Program has a lock icon (pins it so it never rotates) and a swap icon (pick
 a specific alternate from the same suggestion list instead of the auto-picked one). Both are stored
 per-exercise as `locked`/`weekBOverrideSlug` on `ProgramExercise` (`lib/types.ts`), alongside the
 existing sets/reps, so they persist with the rest of the program. Checkbox-mode ticks are still
 keyed by the exercise's stable `id` (not its slug), so ticking off sets works correctly regardless
-of which week's substitute is on screen.
+of which variant is on screen. My Plan has no per-exercise persistence, so it only shows the toggle
+and the auto-picked alternate — no lock/swap controls.
+
+### Checklist completion percentage
+
+When "Checkbox Mode" is on in My Program, a live percentage (plus a progress bar and "x/y" count)
+shows next to the toggle, computed from the active day's exercises and its saved checks
+(`app/my-program/MyProgramClient.tsx`). It recalculates on every check/uncheck and stays correct
+after adding, removing, or resetting exercises since it's derived from the current day tree rather
+than stored separately.
 
 ## Swapping in real images
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { Equipment, ExperienceLevel, ProgramExercise, ProgramSection } from "@/lib/types";
-import { ProgramWeek } from "@/lib/exerciseAlternates";
-import { resolveProgramExercise } from "@/lib/weekRotation";
+import { RotationVariant } from "@/lib/exerciseAlternates";
+import { resolveProgramExercise } from "@/lib/exerciseRotation";
 import { TrainingGoal } from "@/lib/repsRecommendations";
 import ExerciseRow from "@/components/program/ExerciseRow";
 
@@ -16,7 +16,7 @@ export default function ProgramSectionCard({
   section,
   workoutMode,
   checks,
-  week,
+  variant,
   rotationOptions,
   onToggleCheck,
   onUpdateExercise,
@@ -30,7 +30,7 @@ export default function ProgramSectionCard({
   section: ProgramSection;
   workoutMode: boolean;
   checks: Record<string, boolean>;
-  week: ProgramWeek;
+  variant: RotationVariant;
   rotationOptions: RotationOptions;
   onToggleCheck: (exerciseId: string) => void;
   onUpdateExercise: (exerciseId: string, updates: Partial<ProgramExercise>) => void;
@@ -59,7 +59,7 @@ export default function ProgramSectionCard({
           <ExerciseRow
             key={exercise.id}
             exercise={exercise}
-            resolved={resolveProgramExercise(exercise, week, rotationOptions)}
+            resolved={resolveProgramExercise(exercise, variant, rotationOptions)}
             workoutMode={workoutMode}
             checked={Boolean(checks[exercise.id])}
             onToggleCheck={() => onToggleCheck(exercise.id)}

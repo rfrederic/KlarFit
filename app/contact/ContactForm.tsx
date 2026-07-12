@@ -14,7 +14,7 @@ export default function ContactForm() {
   if (submitted) {
     return (
       <div className="rounded-lg border border-accent bg-accent/10 p-6 text-foreground">
-        Thanks for reaching out! This is a demo form with no backend yet — your message wasn&apos;t
+        Thanks for reaching out! This is a demo form with no backend yet your message wasn&apos;t
         sent anywhere, but this is where a real submission handler would go.
       </div>
     );

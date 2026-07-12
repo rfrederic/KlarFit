@@ -23,7 +23,7 @@ export default function Home() {
             Ready to Train <span className="text-accent">Smarter?</span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted">
-            Your personalized plan is five questions away. No account, no credit card — just a
+            Your personalized plan is five questions away. No account, no credit card  just a
             plan built for you.
           </p>
           <div className="mt-8">

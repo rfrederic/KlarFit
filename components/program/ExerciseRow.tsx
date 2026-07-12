@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ProgramExercise } from "@/lib/types";
-import { ResolvedExercise } from "@/lib/weekRotation";
+import { ResolvedExercise } from "@/lib/exerciseRotation";
 import Badge from "@/components/ui/Badge";
 
 function LockIcon({ locked }: { locked: boolean }) {

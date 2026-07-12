@@ -1,8 +1,8 @@
 import { Difficulty, Equipment, Exercise } from "@/lib/types";
 
 /**
- * Finds "equivalent" exercises for the weekly rotation feature (see
- * lib/weekRotation.ts). Pure rule tables, same philosophy as
+ * Finds "equivalent" exercises for the daily rotation feature (see
+ * lib/exerciseRotation.ts). Pure rule tables, same philosophy as
  * lib/repsRecommendations.ts: no AI/network calls, every decision is a plain
  * lookup or keyword match so it stays deterministic and easy to tune.
  *
@@ -153,23 +153,21 @@ export function getBestAlternate(
   return getAlternateSuggestions(exercise, library, availableEquipment)[0];
 }
 
-// --- Week A / Week B ---------------------------------------------------
+// --- Daily rotation (Variant A / Variant B) --------------------------------
 
-export type ProgramWeek = "A" | "B";
+export type RotationVariant = "A" | "B";
 
-/** ISO 8601 week number (1-53), used so "Week A/B" is stable and shared
- * across devices without storing any state — it's purely a function of today's date. */
-export function getISOWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = (d.getUTCDay() + 6) % 7; // Monday = 0 .. Sunday = 6
-  d.setUTCDate(d.getUTCDate() - dayNum + 3); // nearest Thursday
-  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
-  const firstDayNum = (firstThursday.getUTCDay() + 6) % 7;
-  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNum + 3);
-  return 1 + Math.round((d.getTime() - firstThursday.getTime()) / (7 * 24 * 60 * 60 * 1000));
+/** Days since the Unix epoch, counted on the local calendar (midnight to
+ * midnight) so the variant flips once every 24 hours at local midnight
+ * rather than on a UTC boundary. */
+function getLocalDayNumber(date: Date): number {
+  const localMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.floor(localMidnight.getTime() / (24 * 60 * 60 * 1000));
 }
 
-/** Even ISO week number = Week A, odd = Week B. */
-export function getCurrentProgramWeek(date: Date = new Date()): ProgramWeek {
-  return getISOWeek(date) % 2 === 0 ? "A" : "B";
+/** Even day number = Variant A, odd = Variant B — flips every 24 hours,
+ * shared across devices without storing any state since it's purely a
+ * function of today's date. */
+export function getCurrentRotationVariant(date: Date = new Date()): RotationVariant {
+  return getLocalDayNumber(date) % 2 === 0 ? "A" : "B";
 }

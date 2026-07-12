@@ -6,13 +6,13 @@ import { loadChecks, loadProgram, makeId, ProgramChecks, resetProgram, saveCheck
 import { loadQuizAnswers } from "@/lib/storage";
 import { getExerciseBySlug } from "@/data/exercises";
 import { GOAL_TO_TRAINING_GOAL, getRecommendation } from "@/lib/repsRecommendations";
-import { getCurrentProgramWeek, ProgramWeek } from "@/lib/exerciseAlternates";
+import { getCurrentRotationVariant, RotationVariant } from "@/lib/exerciseAlternates";
 import { Button } from "@/components/ui/Button";
 import DayTabs from "@/components/program/DayTabs";
 import ProgramDayView from "@/components/program/ProgramDayView";
 import ExercisePickerModal from "@/components/program/ExercisePickerModal";
 import SwapAlternateModal from "@/components/program/SwapAlternateModal";
-import WeekToggle from "@/components/program/WeekToggle";
+import RotationToggle from "@/components/ui/RotationToggle";
 import UndoToast from "@/components/program/UndoToast";
 
 function updateDay(program: UserProgram, dayId: string, updater: (day: ProgramDay) => ProgramDay): UserProgram {
@@ -43,7 +43,7 @@ export default function MyProgramClient() {
   const [pickerSectionId, setPickerSectionId] = useState<string | null>(null);
   const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<QuizAnswers | null>(null);
-  const [previewWeek, setPreviewWeek] = useState<ProgramWeek | null>(null);
+  const [previewVariant, setPreviewVariant] = useState<RotationVariant | null>(null);
   const [swapTarget, setSwapTarget] = useState<SwapTarget | null>(null);
 
   useEffect(() => {
@@ -219,10 +219,11 @@ export default function MyProgramClient() {
 
   const activeDayChecks = checks[activeDay.id] ?? {};
 
-  // Even ISO week = Week A, odd = Week B; `previewWeek` lets the user peek at
-  // the other week without changing what's actually "current".
-  const autoWeek = getCurrentProgramWeek();
-  const activeWeek = previewWeek ?? autoWeek;
+  // Even local-day number = Variant A, odd = Variant B, flipping every 24
+  // hours; `previewVariant` lets the user peek at the other one without
+  // changing what's actually "today".
+  const autoVariant = getCurrentRotationVariant();
+  const activeVariant = previewVariant ?? autoVariant;
   const rotationOptions = {
     availableEquipment: quizAnswers?.equipment,
     goal: quizAnswers ? GOAL_TO_TRAINING_GOAL[quizAnswers.goal] : undefined,
@@ -234,6 +235,14 @@ export default function MyProgramClient() {
   const swapTargetLibraryExercise = swapTargetExercise?.exerciseSlug
     ? getExerciseBySlug(swapTargetExercise.exerciseSlug)
     : undefined;
+
+  // Completion percentage for the active day's checklist, based on the
+  // exercises actually in the day right now (so it stays correct after
+  // adding/removing exercises or resetting checks).
+  const activeDayExerciseIds = activeDay.sections.flatMap((section) => section.exercises.map((exercise) => exercise.id));
+  const completedCount = activeDayExerciseIds.filter((id) => activeDayChecks[id]).length;
+  const completionPercent =
+    activeDayExerciseIds.length === 0 ? 0 : Math.round((completedCount / activeDayExerciseIds.length) * 100);
 
   return (
     <div>
@@ -259,15 +268,31 @@ export default function MyProgramClient() {
           <span className="font-display text-sm uppercase tracking-wide text-foreground">Checkbox Mode</span>
         </button>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           {workoutMode && (
-            <Button type="button" variant="ghost" onClick={handleClearToday}>
-              Clear Today
-            </Button>
+            <div className="flex items-center gap-2">
+              <span className="font-display text-sm text-accent">{completionPercent}%</span>
+              <span className="h-2 w-24 overflow-hidden rounded-full bg-background">
+                <span
+                  className="block h-full rounded-full bg-accent transition-all"
+                  style={{ width: `${completionPercent}%` }}
+                />
+              </span>
+              <span className="text-xs text-muted">
+                {completedCount}/{activeDayExerciseIds.length}
+              </span>
+            </div>
           )}
-          <Button type="button" variant="secondary" onClick={handleReset}>
-            Reset to Default
-          </Button>
+          <div className="flex gap-2">
+            {workoutMode && (
+              <Button type="button" variant="ghost" onClick={handleClearToday}>
+                Clear Today
+              </Button>
+            )}
+            <Button type="button" variant="secondary" onClick={handleReset}>
+              Reset to Default
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -276,10 +301,10 @@ export default function MyProgramClient() {
       </div>
 
       <div className="mt-5">
-        <WeekToggle
-          activeWeek={activeWeek}
-          isPreview={previewWeek !== null}
-          onTogglePreview={() => setPreviewWeek(previewWeek === null ? (autoWeek === "A" ? "B" : "A") : null)}
+        <RotationToggle
+          activeVariant={activeVariant}
+          isPreview={previewVariant !== null}
+          onTogglePreview={() => setPreviewVariant(previewVariant === null ? (autoVariant === "A" ? "B" : "A") : null)}
         />
       </div>
 
@@ -288,7 +313,7 @@ export default function MyProgramClient() {
           day={activeDay}
           workoutMode={workoutMode}
           checks={activeDayChecks}
-          week={activeWeek}
+          variant={activeVariant}
           rotationOptions={rotationOptions}
           onToggleCheck={handleToggleCheck}
           onUpdateExercise={handleUpdateExercise}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ProgramDay, ProgramExercise } from "@/lib/types";
-import { ProgramWeek } from "@/lib/exerciseAlternates";
+import { RotationVariant } from "@/lib/exerciseAlternates";
 import ProgramSectionCard, { RotationOptions } from "@/components/program/ProgramSectionCard";
 import { Button } from "@/components/ui/Button";
 
@@ -10,7 +10,7 @@ export default function ProgramDayView({
   day,
   workoutMode,
   checks,
-  week,
+  variant,
   rotationOptions,
   onToggleCheck,
   onUpdateExercise,
@@ -25,7 +25,7 @@ export default function ProgramDayView({
   day: ProgramDay;
   workoutMode: boolean;
   checks: Record<string, boolean>;
-  week: ProgramWeek;
+  variant: RotationVariant;
   rotationOptions: RotationOptions;
   onToggleCheck: (sectionId: string, exerciseId: string) => void;
   onUpdateExercise: (sectionId: string, exerciseId: string, updates: Partial<ProgramExercise>) => void;
@@ -60,7 +60,7 @@ export default function ProgramDayView({
             section={section}
             workoutMode={workoutMode}
             checks={checks}
-            week={week}
+            variant={variant}
             rotationOptions={rotationOptions}
             onToggleCheck={(exerciseId) => onToggleCheck(section.id, exerciseId)}
             onUpdateExercise={(exerciseId, updates) => onUpdateExercise(section.id, exerciseId, updates)}

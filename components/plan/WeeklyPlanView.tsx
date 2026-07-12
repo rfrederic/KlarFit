@@ -1,6 +1,13 @@
-import { WorkoutPlan } from "@/lib/types";
+"use client";
+
+import { useEffect, useState } from "react";
+import { QuizAnswers, WorkoutPlan } from "@/lib/types";
+import { loadQuizAnswers } from "@/lib/storage";
+import { getCurrentRotationVariant, RotationVariant } from "@/lib/exerciseAlternates";
+import { GOAL_TO_TRAINING_GOAL } from "@/lib/repsRecommendations";
 import DayCard from "@/components/plan/DayCard";
 import DownloadPlanButton from "@/components/plan/DownloadPlanButton";
+import RotationToggle from "@/components/ui/RotationToggle";
 import { Button } from "@/components/ui/Button";
 
 const GOAL_LABELS: Record<WorkoutPlan["goal"], string> = {
@@ -22,6 +29,18 @@ export default function WeeklyPlanView({
   plan: WorkoutPlan;
   onRetake: () => void;
 }) {
+  const [previewVariant, setPreviewVariant] = useState<RotationVariant | null>(null);
+  const [quizAnswers, setQuizAnswers] = useState<QuizAnswers | null>(null);
+
+  useEffect(() => {
+    setQuizAnswers(loadQuizAnswers());
+  }, []);
+
+  // Even local-day number = Variant A, odd = Variant B, flipping every 24
+  // hours — same rotation engine and cadence as My Program.
+  const autoVariant = getCurrentRotationVariant();
+  const activeVariant = previewVariant ?? autoVariant;
+
   return (
     <div>
       <div className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
@@ -45,9 +64,24 @@ export default function WeeklyPlanView({
         </div>
       </div>
 
+      <div className="mt-6 no-print">
+        <RotationToggle
+          activeVariant={activeVariant}
+          isPreview={previewVariant !== null}
+          onTogglePreview={() => setPreviewVariant(previewVariant === null ? (autoVariant === "A" ? "B" : "A") : null)}
+        />
+      </div>
+
       <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
         {plan.days.map((day, i) => (
-          <DayCard key={`${day.day}-${i}`} day={day} />
+          <DayCard
+            key={`${day.day}-${i}`}
+            day={day}
+            variant={activeVariant}
+            goal={GOAL_TO_TRAINING_GOAL[plan.goal]}
+            experience={plan.experience}
+            availableEquipment={quizAnswers?.equipment}
+          />
         ))}
       </div>
     </div>
