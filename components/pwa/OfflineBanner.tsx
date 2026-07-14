@@ -24,7 +24,7 @@ export default function OfflineBanner() {
       role="status"
       className="sticky top-16 z-30 w-full bg-accent px-4 py-2 text-center text-sm font-semibold text-accent-foreground"
     >
-      You&apos;re offline — showing cached content.
+      You&apos;re offline  showing cached content.
     </div>
   );
 }

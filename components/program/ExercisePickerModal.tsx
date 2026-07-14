@@ -144,7 +144,7 @@ export default function ExercisePickerModal({
             ))}
             {searchResults.length === 0 && (
               <li className="rounded-md border border-border bg-background/40 px-4 py-3 text-sm text-muted">
-                No matches in the library — add it as a custom exercise below.
+                No matches in the library add it as a custom exercise below.
               </li>
             )}
           </ul>
@@ -180,7 +180,7 @@ export default function ExercisePickerModal({
               ))}
               {categoryResults.length === 0 && (
                 <li className="rounded-md border border-border bg-background/40 px-4 py-3 text-sm text-muted">
-                  No matches in this category — add it as a custom exercise below.
+                  No matches in this category add it as a custom exercise below.
                 </li>
               )}
             </ul>

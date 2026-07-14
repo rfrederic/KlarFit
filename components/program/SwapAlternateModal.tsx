@@ -25,7 +25,7 @@ export default function SwapAlternateModal({
     <Modal title={`Swap "${original.name}"`} onClose={onClose}>
       <div className="flex flex-col gap-3">
         <p className="text-sm text-muted">
-          Pick a Week B substitute, or use the auto-picked best match. Same muscle sub-tag and movement
+          Pick a Week B substitute, or use the auto picked best match. Same muscle sub tag and movement
           pattern, same or easier difficulty.
         </p>
 
@@ -68,7 +68,7 @@ export default function SwapAlternateModal({
           ))}
           {suggestions.length === 0 && (
             <li className="rounded-md border border-border bg-background/40 px-4 py-3 text-sm text-muted">
-              No qualifying alternate in the library — this exercise stays the same every week.
+              No qualifying alternate in the library this exercise stays the same every week.
             </li>
           )}
         </ul>

@@ -75,7 +75,7 @@ export default function ProgramSectionCard({
         ))}
         {section.exercises.length === 0 && (
           <li className="rounded-md border border-dashed border-border p-4 text-center text-sm text-muted">
-            No exercises yet — add one below.
+            No exercises yet add one below.
           </li>
         )}
       </ul>
