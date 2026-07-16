@@ -25,7 +25,11 @@ export default function DayCarousel({
   onSelect: (dayId: string) => void;
 }) {
   return (
-    <div className="chip-scroll -mx-4 flex gap-3 overflow-x-auto px-4 pb-1" role="tablist" aria-label="Day of week">
+    <div
+      className="chip-scroll -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1"
+      role="tablist"
+      aria-label="Day of week"
+    >
       {slots.map((slot) => {
         const isActive = slot.day?.id === activeDayId;
         const isToday = slot.weekday === todayWeekday;
@@ -40,13 +44,13 @@ export default function DayCarousel({
             aria-selected={isActive}
             disabled={!slot.day}
             onClick={() => slot.day && onSelect(slot.day.id)}
-            className={`flex w-[4.5rem] shrink-0 flex-col items-center gap-1.5 rounded-xl p-1.5 transition-colors ${
+            className={`flex w-[45%] shrink-0 snap-start flex-col items-center gap-2 rounded-xl p-2 transition-colors sm:w-40 ${
               isToday ? "border-2 border-accent" : "border-2 border-transparent"
             } ${slot.day ? "hover:bg-surface" : "cursor-default opacity-60"}`}
           >
             <DayThumb dayId={slot.day?.id ?? slot.weekday} focus={slot.day?.focus ?? "Rest"} dimmed={!slot.day} />
             <span
-              className={`font-display text-xs uppercase tracking-wide ${
+              className={`font-display text-sm uppercase tracking-wide ${
                 isActive ? "text-accent" : "text-foreground"
               }`}
             >
@@ -58,7 +62,7 @@ export default function DayCarousel({
                 className={`h-1.5 w-1.5 rounded-full ${complete ? "bg-accent shadow-glow" : "bg-border"}`}
               />
             ) : (
-              <span className="text-center text-[8px] font-semibold uppercase leading-tight tracking-wide text-muted">
+              <span className="text-center text-[10px] font-semibold uppercase leading-tight tracking-wide text-muted">
                 Active Rest Day
               </span>
             )}

@@ -1,12 +1,12 @@
 import { Exercise } from "@/lib/types";
-import Video from "@/components/ui/Video";
 import ExerciseImagePlaceholder from "@/components/exercises/ExerciseImage";
 
 /**
- * Small square thumbnail used in list rows and the workout screen: the
- * video's own first frame stands in for a poster image when one exists
- * (no `autoPlay`, so it just sits paused on frame one), otherwise the
- * existing start-image placeholder.
+ * Small square thumbnail used in list rows and the workout screen. Always a
+ * static placeholder image, never a `<video>` element — so nothing in My
+ * Program fetches or renders real footage until the user actually opens that
+ * exercise's workout screen and taps play. Matches the placeholder-then-play
+ * pattern already used by the workout mode media area.
  */
 export default function ExerciseThumb({
   exercise,
@@ -23,18 +23,6 @@ export default function ExerciseThumb({
         aria-hidden="true"
         style={{ width: size, height: size }}
         className={`shrink-0 rounded-md border border-border bg-surface-raised ${className}`}
-      />
-    );
-  }
-
-  if (exercise.video) {
-    return (
-      <Video
-        src={exercise.video}
-        playsInline
-        preload="metadata"
-        style={{ width: size, height: size }}
-        className={`shrink-0 rounded-md border border-border object-cover ${className}`}
       />
     );
   }

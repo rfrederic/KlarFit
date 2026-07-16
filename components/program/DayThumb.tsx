@@ -6,12 +6,10 @@
 export default function DayThumb({
   dayId,
   focus,
-  size = 56,
   dimmed = false,
 }: {
   dayId: string;
   focus: string;
-  size?: number;
   dimmed?: boolean;
 }) {
   return (
@@ -19,14 +17,13 @@ export default function DayThumb({
       role="img"
       aria-label={focus}
       data-day-id={dayId}
-      style={{ width: size, height: size }}
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-xl border ${
+      className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border ${
         dimmed ? "border-border bg-surface" : "border-accent/30 bg-gradient-to-br from-surface-raised to-background"
       }`}
     >
       <span
         aria-hidden="true"
-        className={`px-1 text-center font-display text-[10px] uppercase leading-tight tracking-wide ${
+        className={`px-2 text-center font-display text-xs uppercase leading-tight tracking-wide ${
           dimmed ? "text-muted" : "text-accent/80"
         }`}
       >

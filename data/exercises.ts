@@ -1060,6 +1060,7 @@ export const exercises: Exercise[] = [
     ],
     imageStart: { src: "/placeholders/russian-twist-start.svg", alt: "Russian twist centered starting position" },
     imageEnd: { src: "/placeholders/russian-twist-end.svg", alt: "Russian twist rotated to one side" },
+    video: "/exercises/core-wist.mp4",
   },
   {
     id: "hanging-leg-raise",
@@ -8251,6 +8252,31 @@ export const exercises: Exercise[] = [
     imageStart: { src: "/placeholders/zottman-preacher-curl-start.svg", alt: "Zottman Preacher Curl starting position" },
     imageEnd: { src: "/placeholders/zottman-preacher-curl-end.svg", alt: "Zottman Preacher Curl end position" },
     video: "/exercises/zottman-preacher-curl.mp4",
+  },
+  {
+    id: "palm-rotational-row",
+    slug: "palm-rotational-row",
+    name: "Bent-Over Dumbbell Row (Rotational Grip)",
+    muscleGroups: ["back", "arms"],
+    subGroup: ["upperBack"],
+    equipment: ["dumbbells"],
+    difficulty: "intermediate",
+    audience: "all",
+    contraindications: ["lowerBack"],
+    instructions: [
+      "Hold a dumbbell in each hand with a pronated (palms-down) grip and hinge forward at the hips until your torso is near-parallel to the floor.",
+      "Row both dumbbells up toward your hips, driving your elbows back.",
+      "As the dumbbells rise, rotate your wrists so your palms face your body near the top of the row.",
+      "Reverse the rotation as you lower the dumbbells back down to the pronated starting position.",
+    ],
+    commonMistakes: [
+      "Standing the torso up between reps instead of holding a steady hinge.",
+      "Rotating the wrists too early or too late relative to the pulling motion.",
+      "Rounding the lower back instead of keeping a neutral spine.",
+    ],
+    imageStart: { src: "/placeholders/palm-rotational-row-start.svg", alt: "Bent-Over Dumbbell Row (Rotational Grip) starting position" },
+    imageEnd: { src: "/placeholders/palm-rotational-row-end.svg", alt: "Bent-Over Dumbbell Row (Rotational Grip) end position" },
+    video: "/exercises/palm-rotational-row.mp4",
   },
 ];
 
