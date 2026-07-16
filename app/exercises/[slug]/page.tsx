@@ -5,6 +5,7 @@ import { exercises, getExerciseBySlug } from "@/data/exercises";
 import { Exercise } from "@/lib/types";
 import Container from "@/components/ui/Container";
 import Badge from "@/components/ui/Badge";
+import Video from "@/components/ui/Video";
 import ExerciseImagePlaceholder from "@/components/exercises/ExerciseImage";
 import RecommendationCard from "@/components/exercises/RecommendationCard";
 import { SUBGROUP_LABELS } from "@/lib/subgroups";
@@ -64,14 +65,14 @@ export default function ExerciseDetailPage({
             {exercise.audience !== "all" && <Badge active>{exercise.audience}</Badge>}
           </div>
 
-          <video
+          <Video
             src={exercise.video}
             controls
             playsInline
             className="mt-8 aspect-video w-full rounded-lg border border-border bg-surface object-cover"
           >
             Your browser doesn&apos;t support embedded video.
-          </video>
+          </Video>
 
           <div className="mt-10 flex flex-col gap-10">
             <ExerciseDescription exercise={exercise} />

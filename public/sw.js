@@ -1,6 +1,6 @@
 // KlarFit service worker — manual implementation (no Workbox/next-pwa dependency).
 // Bump VERSION on any caching-strategy change to invalidate old caches on activate.
-const VERSION = "klarfit-v1";
+const VERSION = "klarfit-v2";
 const SHELL_CACHE = `shell-${VERSION}`;
 const PAGES_CACHE = `pages-${VERSION}`;
 const ASSETS_CACHE = `assets-${VERSION}`;

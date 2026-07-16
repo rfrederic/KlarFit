@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ProgramExercise } from "@/lib/types";
+import { Exercise, ProgramExercise } from "@/lib/types";
 import { ResolvedExercise } from "@/lib/exerciseRotation";
 import Badge from "@/components/ui/Badge";
+import ExerciseThumb from "@/components/exercises/ExerciseThumb";
 
 function LockIcon({ locked }: { locked: boolean }) {
   return locked ? (
@@ -34,10 +34,21 @@ function SwapIcon() {
   );
 }
 
+function ChevronIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0 text-muted">
+      <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function ExerciseRow({
   exercise,
   resolved,
+  libraryExercise,
+  restSeconds,
   workoutMode,
+  editMode,
   checked,
   onToggleCheck,
   onUpdate,
@@ -48,10 +59,14 @@ export default function ExerciseRow({
   canMoveDown,
   onToggleLock,
   onOpenSwap,
+  onOpenWorkout,
 }: {
   exercise: ProgramExercise;
   resolved: ResolvedExercise;
+  libraryExercise?: Exercise;
+  restSeconds?: number;
   workoutMode: boolean;
+  editMode: boolean;
   checked: boolean;
   onToggleCheck: () => void;
   onUpdate: (updates: Partial<ProgramExercise>) => void;
@@ -62,6 +77,7 @@ export default function ExerciseRow({
   canMoveDown: boolean;
   onToggleLock: () => void;
   onOpenSwap: () => void;
+  onOpenWorkout: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [setsDraft, setSetsDraft] = useState(exercise.sets === null ? "" : String(exercise.sets));
@@ -81,15 +97,34 @@ export default function ExerciseRow({
     setEditing(false);
   };
 
+  const statsLine = [
+    resolved.sets !== null ? `${resolved.sets} SETS` : null,
+    `${resolved.reps} REPS`,
+    restSeconds ? `${restSeconds} SEC REST` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <li className="flex flex-col gap-3 rounded-lg border border-border bg-background/40 p-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-1 items-center gap-3">
+    <li className="rounded-lg border border-border bg-background/40 transition-colors">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => !editing && onOpenWorkout()}
+        onKeyDown={(e) => {
+          if ((e.key === "Enter" || e.key === " ") && !editing) onOpenWorkout();
+        }}
+        className="flex items-center gap-3 p-3 active:bg-surface"
+      >
         {workoutMode && (
           <button
             type="button"
             role="checkbox"
             aria-checked={checked}
-            onClick={onToggleCheck}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleCheck();
+            }}
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
               checked ? "border-accent bg-accent text-accent-foreground" : "border-border text-transparent"
             }`}
@@ -99,74 +134,78 @@ export default function ExerciseRow({
             </svg>
           </button>
         )}
-        <div className="flex flex-col gap-1">
+
+        <ExerciseThumb exercise={libraryExercise} size={56} />
+
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            {resolved.exerciseSlug ? (
-              <Link
-                href={`/exercises/${resolved.exerciseSlug}`}
-                className={`font-semibold text-foreground hover:text-accent hover:underline ${
-                  checked ? "text-muted line-through" : ""
-                }`}
-              >
-                {resolved.label}
-              </Link>
-            ) : (
-              <span className={`font-semibold text-foreground ${checked ? "text-muted line-through" : ""}`}>
-                {resolved.label}
-              </span>
-            )}
+            <p
+              className={`truncate font-display text-base uppercase tracking-wide text-foreground ${
+                checked ? "text-muted line-through" : ""
+              }`}
+            >
+              {resolved.label}
+            </p>
             {resolved.isRotated && <Badge active>Rotated</Badge>}
           </div>
-        </div>
-      </div>
 
-      <div className="flex items-center justify-between gap-1 sm:justify-end">
-        {editing ? (
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min={0}
-              inputMode="numeric"
-              value={setsDraft}
-              onChange={(e) => setSetsDraft(e.target.value)}
-              placeholder="Sets"
-              aria-label="Sets"
-              className="w-16 rounded-md border border-border bg-background px-2 py-2 text-center text-foreground focus-visible:border-accent"
-            />
-            <span className="text-muted">&times;</span>
-            <input
-              type="text"
-              value={repsDraft}
-              onChange={(e) => setRepsDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitEdit();
-              }}
-              placeholder="Reps"
-              aria-label="Reps"
-              className="w-24 rounded-md border border-border bg-background px-2 py-2 text-center text-foreground focus-visible:border-accent"
-            />
+          {editing ? (
+            <div className="mt-1.5 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              <input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                value={setsDraft}
+                onChange={(e) => setSetsDraft(e.target.value)}
+                placeholder="Sets"
+                aria-label="Sets"
+                className="w-14 rounded-md border border-border bg-background px-2 py-1.5 text-center text-sm text-foreground focus-visible:border-accent"
+              />
+              <span className="text-muted">&times;</span>
+              <input
+                type="text"
+                value={repsDraft}
+                onChange={(e) => setRepsDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitEdit();
+                }}
+                placeholder="Reps"
+                aria-label="Reps"
+                className="w-20 rounded-md border border-border bg-background px-2 py-1.5 text-center text-sm text-foreground focus-visible:border-accent"
+              />
+              <button
+                type="button"
+                onClick={commitEdit}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground"
+                aria-label="Save"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 12l5 5L20 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+          ) : (
             <button
               type="button"
-              onClick={commitEdit}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground"
-              aria-label="Save"
+              onClick={(e) => {
+                e.stopPropagation();
+                startEditing();
+              }}
+              className="mt-0.5 text-left text-xs font-semibold uppercase tracking-wide text-muted hover:text-accent"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M4 12l5 5L20 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {statsLine}
             </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={startEditing}
-            className="min-w-[88px] rounded-md border border-border px-3 py-2 text-sm font-semibold text-muted hover:border-accent hover:text-accent"
-          >
-            {resolved.sets !== null ? `${resolved.sets} × ${resolved.reps}` : resolved.reps}
-          </button>
-        )}
+          )}
+        </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        {!editing && <ChevronIcon />}
+      </div>
+
+      {editMode && (
+        <div
+          className="flex items-center justify-end gap-1 border-t border-border px-3 py-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           {canRotate && (
             <>
               <button
@@ -225,7 +264,7 @@ export default function ExerciseRow({
             </svg>
           </button>
         </div>
-      </div>
+      )}
     </li>
   );
 }

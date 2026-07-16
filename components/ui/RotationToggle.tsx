@@ -5,10 +5,12 @@ import { RotationVariant } from "@/lib/exerciseAlternates";
 export default function RotationToggle({
   activeVariant,
   isPreview,
+  dayLabel = "Today's",
   onTogglePreview,
 }: {
   activeVariant: RotationVariant;
   isPreview: boolean;
+  dayLabel?: string;
   onTogglePreview: () => void;
 }) {
   const otherVariant: RotationVariant = activeVariant === "A" ? "B" : "A";
@@ -17,7 +19,7 @@ export default function RotationToggle({
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4">
       <div>
         <p className="font-display text-sm uppercase tracking-[0.3em] text-accent">
-          Today&apos;s Rotation: {activeVariant}
+          {dayLabel} Rotation: {activeVariant}
           {isPreview && <span className="ml-2 text-muted">(Preview)</span>}
         </p>
         <p className="mt-1 text-sm text-muted">

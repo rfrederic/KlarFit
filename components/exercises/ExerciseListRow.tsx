@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Exercise } from "@/lib/types";
 import Badge from "@/components/ui/Badge";
+import Video from "@/components/ui/Video";
 import ExerciseImagePlaceholder from "@/components/exercises/ExerciseImage";
 
 function ChevronIcon() {
@@ -35,7 +36,7 @@ export default function ExerciseListRow({ exercise }: { exercise: Exercise }) {
     >
       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg">
         {exercise.video && isInView ? (
-          <video src={exercise.video} autoPlay muted loop playsInline className="h-full w-full object-cover" />
+          <Video src={exercise.video} autoPlay loop playsInline className="h-full w-full object-cover" />
         ) : (
           <ExerciseImagePlaceholder image={exercise.imageStart} label="Start" />
         )}

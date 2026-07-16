@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { ProgramDay, ProgramExercise } from "@/lib/types";
 import { RotationVariant } from "@/lib/exerciseAlternates";
+import { isFinisherSection } from "@/lib/scheduleDay";
 import ProgramSectionCard, { RotationOptions } from "@/components/program/ProgramSectionCard";
+import FinisherTipCard from "@/components/program/FinisherTipCard";
 import { Button } from "@/components/ui/Button";
 
 export default function ProgramDayView({
   day,
   workoutMode,
+  editMode,
   checks,
   variant,
   rotationOptions,
@@ -21,9 +24,11 @@ export default function ProgramDayView({
   onAddSection,
   onToggleLock,
   onOpenSwap,
+  onOpenWorkout,
 }: {
   day: ProgramDay;
   workoutMode: boolean;
+  editMode: boolean;
   checks: Record<string, boolean>;
   variant: RotationVariant;
   rotationOptions: RotationOptions;
@@ -36,9 +41,13 @@ export default function ProgramDayView({
   onAddSection: (title: string) => void;
   onToggleLock: (sectionId: string, exerciseId: string) => void;
   onOpenSwap: (sectionId: string, exerciseId: string) => void;
+  onOpenWorkout: (sectionId: string, exerciseId: string) => void;
 }) {
   const [addingSection, setAddingSection] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState("");
+
+  const mainSections = day.sections.filter((section) => !isFinisherSection(section.title));
+  const finisherSection = day.sections.find((section) => isFinisherSection(section.title));
 
   const submitNewSection = () => {
     const title = newSectionTitle.trim();
@@ -50,15 +59,15 @@ export default function ProgramDayView({
 
   return (
     <div>
-      <p className="font-display text-sm uppercase tracking-[0.3em] text-accent">{day.day}</p>
-      <h2 className="mt-1 font-display text-2xl uppercase tracking-wide text-foreground sm:text-3xl">{day.focus}</h2>
+      <h2 className="mb-4 font-display text-2xl uppercase tracking-wide text-foreground">{day.focus}</h2>
 
-      <div className="mt-5 flex flex-col gap-4">
-        {day.sections.map((section) => (
+      <div className="flex flex-col gap-4">
+        {mainSections.map((section) => (
           <ProgramSectionCard
             key={section.id}
             section={section}
             workoutMode={workoutMode}
+            editMode={editMode}
             checks={checks}
             variant={variant}
             rotationOptions={rotationOptions}
@@ -70,42 +79,51 @@ export default function ProgramDayView({
             onRemoveSection={() => onRemoveSection(section.id)}
             onToggleLock={(exerciseId) => onToggleLock(section.id, exerciseId)}
             onOpenSwap={(exerciseId) => onOpenSwap(section.id, exerciseId)}
+            onOpenWorkout={(exerciseId) => onOpenWorkout(section.id, exerciseId)}
           />
         ))}
       </div>
 
-      <div className="mt-4">
-        {addingSection ? (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              autoFocus
-              value={newSectionTitle}
-              onChange={(e) => setNewSectionTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") submitNewSection();
-                if (e.key === "Escape") setAddingSection(false);
-              }}
-              placeholder="e.g. Cardio"
-              className="min-w-0 flex-1 rounded-md border border-border bg-background px-4 py-3 text-base text-foreground placeholder:text-muted/60 focus-visible:border-accent"
-            />
-            <Button type="button" onClick={submitNewSection} disabled={newSectionTitle.trim().length === 0}>
-              Add
-            </Button>
-            <Button type="button" variant="ghost" onClick={() => setAddingSection(false)}>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setAddingSection(true)}
-            className="w-full rounded-md border border-dashed border-border py-3 text-sm font-semibold uppercase tracking-wide text-muted hover:border-accent hover:text-accent"
-          >
-            + Add Section
-          </button>
-        )}
-      </div>
+      {finisherSection && (
+        <div className="mt-4">
+          <FinisherTipCard section={finisherSection} />
+        </div>
+      )}
+
+      {editMode && (
+        <div className="mt-4">
+          {addingSection ? (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                autoFocus
+                value={newSectionTitle}
+                onChange={(e) => setNewSectionTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitNewSection();
+                  if (e.key === "Escape") setAddingSection(false);
+                }}
+                placeholder="e.g. Cardio"
+                className="min-w-0 flex-1 rounded-md border border-border bg-background px-4 py-3 text-base text-foreground placeholder:text-muted/60 focus-visible:border-accent"
+              />
+              <Button type="button" onClick={submitNewSection} disabled={newSectionTitle.trim().length === 0}>
+                Add
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setAddingSection(false)}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAddingSection(true)}
+              className="w-full rounded-md border border-dashed border-border py-3 text-sm font-semibold uppercase tracking-wide text-muted hover:border-accent hover:text-accent"
+            >
+              + Add Section
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

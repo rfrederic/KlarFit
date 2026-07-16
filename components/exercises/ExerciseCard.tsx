@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Exercise } from "@/lib/types";
 import Badge from "@/components/ui/Badge";
+import Video from "@/components/ui/Video";
 import ExerciseImagePlaceholder from "@/components/exercises/ExerciseImage";
 import { SUBGROUP_LABELS } from "@/lib/subgroups";
 
@@ -32,10 +33,9 @@ export default function ExerciseCard({ exercise }: { exercise: Exercise }) {
       {exercise.video && isInView ? (
         // Only mounted while the card is in view — unmounting on scroll-out
         // pauses playback and releases the video's decode/memory resources.
-        <video
+        <Video
           src={exercise.video}
           autoPlay
-          muted
           loop
           playsInline
           className="aspect-square w-full object-cover"

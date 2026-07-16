@@ -39,7 +39,7 @@ components/
   program/                 DayTabs, ProgramDayView, ProgramSectionCard, ExerciseRow,
                            ExercisePickerModal, SwapAlternateModal, UndoToast
 data/
-  exercises.ts            Single source of truth for all 228 exercises
+  exercises.ts            Single source of truth for all 321 exercises
   defaultProgram.ts       Seed data for My Program (my personal weekly split)
 lib/
   types.ts                Shared TypeScript types
@@ -221,16 +221,51 @@ than stored separately.
 
 ## Swapping in real images
 
-Ready-to-use AI image generation prompts for all 456 images (Midjourney/DALL-E/Stable Diffusion/Flux,
-with a consistency strategy for keeping the same model across every shot) are in
-[`EXERCISE_IMAGE_PROMPTS.md`](./EXERCISE_IMAGE_PROMPTS.md). Motion prompts for short looping demo
-clips (Kling image-to-video/text-to-video) are in [`KLING_VIDEO_PROMPTS.md`](./KLING_VIDEO_PROMPTS.md) —
-currently covering the 38-exercise Abs Expansion, 26-exercise Biceps Expansion, 20-exercise
-Traps / Neck / Calves Expansion, 25-exercise Triceps Expansion, 7-exercise Forearms Expansion, and
-34-exercise Legs Expansion batches (150 clips total), filename convention `{slug}.mp4` dropped into
-`public/exercises/` and wired via each exercise's optional `video` field in `data/exercises.ts` (see
+Ready-to-use AI image generation prompts for all 456 images covering the original 228-exercise library
+(Midjourney/DALL-E/Stable Diffusion/Flux, with a consistency strategy for keeping the same model
+across every shot) are in [`EXERCISE_IMAGE_PROMPTS.md`](./EXERCISE_IMAGE_PROMPTS.md) — the 93 exercises
+added in the most recent real-footage sync (see below) aren't covered yet and still need prompts
+written if AI stills are ever wanted for them. Motion prompts for short looping demo clips (Kling
+image-to-video/text-to-video) are in [`KLING_VIDEO_PROMPTS.md`](./KLING_VIDEO_PROMPTS.md) — currently
+covering the 38-exercise Abs Expansion, 26-exercise Biceps Expansion, 20-exercise Traps / Neck / Calves
+Expansion, 25-exercise Triceps Expansion, 7-exercise Forearms Expansion, and 34-exercise Legs Expansion
+batches (150 clips total), filename convention `{slug}.mp4` dropped into `public/exercises/` and wired
+via each exercise's optional `video` field in `data/exercises.ts` (see
 `components/exercises/ExerciseCard.tsx` for the lazy-loaded autoplay thumbnail and
 `app/exercises/[slug]/page.tsx` for the 16:9 detail-page player).
+
+Separately, the library has grown from real filmed demo clips dropped into `public/exercises/` in two
+batches. As of the most recent sync, **228 of the 321 exercises** have a real filmed clip rather than an
+AI-generated placeholder image — the remaining ~93 are still on placeholder images and are fair game for
+either the Kling pipeline above or more real footage using the same filename-matching convention. Run
+`npm run check-media` any time to audit `public/exercises/` against `data/exercises.ts` — it reports
+exercises still missing a clip, flags any video file on disk that isn't referenced by exactly one
+exercise, and fails if a `video` field points at a file that no longer exists
+(`scripts/check-media.js`).
+
+Real footage arrives as raw phone-recorded `.mov` files and gets transcoded to web-ready H.264 `.mp4`
+(same `{slug}.mp4` naming convention as the rest of `public/exercises/`; no `.mov` files are kept in the
+repo):
+
+```bash
+ffmpeg -i input.mov \
+  -vf "scale='min(1080,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2" \
+  -an -c:v libx264 -crf 23 -preset medium -pix_fmt yuv420p -movflags +faststart \
+  output.mp4
+```
+
+1080px max dimension (only downscales, never upscales), no audio track, `crf 23` for a good
+size/quality tradeoff, `+faststart` so playback can begin before the whole file downloads. Use the
+same recipe for any future real-footage drop. All video playback (everywhere in the app, not just
+here) renders through `components/ui/Video.tsx`, which defaults to `muted` unless a caller explicitly
+overrides it (the fullscreen player's tap-to-unmute control is the one deliberate exception) — a raw
+`<video>` tag should never be used directly for a new clip.
+
+When a batch of new footage lands in `public/exercises/`, match each file to an exercise by filename
+first (exact slug, then `-woman`/`-f`/`-m` suffixed variants of an existing slug), and only create a
+new exercise entry once you're sure the clip isn't just a differently-named or misspelled duplicate of
+one that already exists — check `npm run check-media`'s "unused files" list against the exercise names
+already in `data/exercises.ts` before assuming a filename is genuinely new.
 
 Every exercise has an `imageStart` and `imageEnd` field:
 
@@ -254,7 +289,8 @@ AI-generated photos:
 
 ### Image files to generate
 
-456 images total (228 exercises × start/end). Recommended: **1024×1024px, square, JPG or WebP**,
+456 images total (228 exercises × start/end — the original library only; the 93 exercises added in the
+most recent real-footage sync aren't covered by this list yet). Recommended: **1024×1024px, square, JPG or WebP**,
 consistent lighting/background across the set so the library feels cohesive. Filenames should
 match the pattern `{slug}-start` / `{slug}-end`:
 

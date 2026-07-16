@@ -1,5 +1,13 @@
 # KlarFit — Kling Video Prompts (150 clips)
 
+> **Update:** the workout screen's fullscreen video player (`components/ui/FullscreenVideoPlayer.tsx`)
+> now fills the whole phone screen for portrait clips. **All future videos — and their start/end
+> still frames — should be generated in 9:16 portrait**, not the 1:1 square used below. The player
+> auto-detects aspect ratio from the video itself (portrait fills edge-to-edge with `object-cover`;
+> square/landscape letterboxes centered with `object-contain`), so existing 1:1 clips keep working
+> without any code change — no need to regenerate them. Filenames are unchanged either way
+> (`public/exercises/{slug}.mp4`), only the framing/aspect ratio of new generations should change.
+
 Motion prompts for Kling (image-to-video or text-to-video) to generate short looping demo
 clips for the Abs Expansion, Biceps Expansion, Traps / Neck / Calves Expansion, Triceps Expansion,
 Forearms Expansion, and Legs Expansion batches in `EXERCISE_IMAGE_PROMPTS.md`. Each clip is one

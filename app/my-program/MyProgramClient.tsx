@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ProgramDay, ProgramExercise, ProgramSection, QuizAnswers, UserProgram } from "@/lib/types";
 import { loadChecks, loadProgram, makeId, ProgramChecks, resetProgram, saveChecks, saveProgram } from "@/lib/program";
 import { loadQuizAnswers } from "@/lib/storage";
 import { getExerciseBySlug } from "@/data/exercises";
 import { GOAL_TO_TRAINING_GOAL, getRecommendation } from "@/lib/repsRecommendations";
 import { getCurrentRotationVariant, RotationVariant } from "@/lib/exerciseAlternates";
+import { buildWeekSlots, getTodayWeekdayName } from "@/lib/scheduleDay";
 import { Button } from "@/components/ui/Button";
-import DayTabs from "@/components/program/DayTabs";
+import DayCarousel from "@/components/program/DayCarousel";
 import ProgramDayView from "@/components/program/ProgramDayView";
 import ExercisePickerModal from "@/components/program/ExercisePickerModal";
 import SwapAlternateModal from "@/components/program/SwapAlternateModal";
@@ -36,22 +38,28 @@ interface SwapTarget {
 }
 
 export default function MyProgramClient() {
+  const router = useRouter();
   const [program, setProgram] = useState<UserProgram | null>(null);
   const [checks, setChecks] = useState<ProgramChecks>({});
   const [activeDayId, setActiveDayId] = useState<string>("");
   const [workoutMode, setWorkoutMode] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [pickerSectionId, setPickerSectionId] = useState<string | null>(null);
   const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<QuizAnswers | null>(null);
   const [previewVariant, setPreviewVariant] = useState<RotationVariant | null>(null);
   const [swapTarget, setSwapTarget] = useState<SwapTarget | null>(null);
 
+  const todayWeekday = getTodayWeekdayName();
+
   useEffect(() => {
     const loadedProgram = loadProgram();
     setProgram(loadedProgram);
     setChecks(loadChecks());
-    setActiveDayId(loadedProgram.days[0]?.id ?? "");
+    const todayDay = loadedProgram.days.find((day) => day.day === todayWeekday);
+    setActiveDayId(todayDay?.id ?? loadedProgram.days[0]?.id ?? "");
     setQuizAnswers(loadQuizAnswers());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -63,6 +71,7 @@ export default function MyProgramClient() {
   if (!program || !activeDayId) return null;
 
   const activeDay = program.days.find((day) => day.id === activeDayId) ?? program.days[0];
+  const weekSlots = buildWeekSlots(program.days);
 
   const persist = (next: UserProgram) => {
     setProgram(next);
@@ -217,6 +226,12 @@ export default function MyProgramClient() {
     handleUpdateExercise(swapTarget.sectionId, swapTarget.exerciseId, { weekBOverrideSlug: slug });
   };
 
+  const handleOpenWorkout = (exerciseId?: string) => {
+    const params = new URLSearchParams({ day: activeDay.id });
+    if (exerciseId) params.set("exercise", exerciseId);
+    router.push(`/my-program/workout?${params.toString()}`);
+  };
+
   const activeDayChecks = checks[activeDay.id] ?? {};
 
   // Even local-day number = Variant A, odd = Variant B, flipping every 24
@@ -244,31 +259,59 @@ export default function MyProgramClient() {
   const completionPercent =
     activeDayExerciseIds.length === 0 ? 0 : Math.round((completedCount / activeDayExerciseIds.length) * 100);
 
+  const isViewingToday = activeDay.day === todayWeekday;
+
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={workoutMode}
-          onClick={() => setWorkoutMode((v) => !v)}
-          className="flex items-center gap-3"
-        >
-          <span
-            className={`flex h-7 w-12 shrink-0 items-center rounded-full border border-border p-1 transition-colors ${
-              workoutMode ? "bg-accent" : "bg-surface"
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-display text-sm uppercase tracking-[0.3em] text-accent">
+            {isViewingToday ? "Today" : activeDay.focus || " "}
+          </p>
+          <h1 className="font-display text-4xl uppercase tracking-wide text-foreground sm:text-5xl">
+            {isViewingToday ? todayWeekday : activeDay.day}
+          </h1>
+        </div>
+        <div className="mt-1 flex shrink-0 gap-2">
+          <button
+            type="button"
+            aria-pressed={editMode}
+            onClick={() => setEditMode((v) => !v)}
+            title="Edit program (add/remove/reorder/lock/swap exercises)"
+            className={`flex h-10 w-10 items-center justify-center rounded-md border transition-colors ${
+              editMode ? "border-accent bg-accent text-accent-foreground" : "border-border text-muted hover:border-accent hover:text-accent"
             }`}
           >
-            <span
-              className={`h-5 w-5 rounded-full bg-background transition-transform ${
-                workoutMode ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </span>
-          <span className="font-display text-sm uppercase tracking-wide text-foreground">Checkbox Mode</span>
-        </button>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M4 20l4.5-1 10-10-3.5-3.5-10 10L4 20Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={workoutMode}
+            aria-label="Checkbox Mode"
+            title="Checkbox Mode (manually tick off sets)"
+            onClick={() => setWorkoutMode((v) => !v)}
+            className={`flex h-10 w-10 items-center justify-center rounded-md border transition-colors ${
+              workoutMode ? "border-accent bg-accent text-accent-foreground" : "border-border text-muted hover:border-accent hover:text-accent"
+            }`}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 12l5 5L20 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+      {(workoutMode || editMode) && (
+        <div className="mt-3 flex flex-wrap items-center gap-3">
           {workoutMode && (
             <div className="flex items-center gap-2">
               <span className="font-display text-sm text-accent">{completionPercent}%</span>
@@ -283,35 +326,43 @@ export default function MyProgramClient() {
               </span>
             </div>
           )}
-          <div className="flex gap-2">
-            {workoutMode && (
-              <Button type="button" variant="ghost" onClick={handleClearToday}>
-                Clear Today
-              </Button>
-            )}
+          {workoutMode && (
+            <Button type="button" variant="ghost" onClick={handleClearToday}>
+              {isViewingToday ? "Clear Today" : `Clear ${activeDay.day}`}
+            </Button>
+          )}
+          {editMode && (
             <Button type="button" variant="secondary" onClick={handleReset}>
               Reset to Default
             </Button>
-          </div>
+          )}
         </div>
-      </div>
+      )}
 
       <div className="mt-5">
-        <DayTabs days={program.days} activeDayId={activeDay.id} onSelect={setActiveDayId} />
+        <DayCarousel
+          slots={weekSlots}
+          activeDayId={activeDay.id}
+          todayWeekday={todayWeekday}
+          checks={checks}
+          onSelect={setActiveDayId}
+        />
       </div>
 
       <div className="mt-5">
         <RotationToggle
           activeVariant={activeVariant}
           isPreview={previewVariant !== null}
+          dayLabel={isViewingToday ? "Today's" : `${activeDay.day}'s`}
           onTogglePreview={() => setPreviewVariant(previewVariant === null ? (autoVariant === "A" ? "B" : "A") : null)}
         />
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 pb-28 md:pb-6">
         <ProgramDayView
           day={activeDay}
           workoutMode={workoutMode}
+          editMode={editMode}
           checks={activeDayChecks}
           variant={activeVariant}
           rotationOptions={rotationOptions}
@@ -324,7 +375,22 @@ export default function MyProgramClient() {
           onAddSection={handleAddSection}
           onToggleLock={handleToggleLock}
           onOpenSwap={(sectionId, exerciseId) => setSwapTarget({ sectionId, exerciseId })}
+          onOpenWorkout={(_sectionId, exerciseId) => handleOpenWorkout(exerciseId)}
         />
+      </div>
+
+      <div
+        className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-background/95 p-4 backdrop-blur md:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <Button type="button" className="w-full" onClick={() => handleOpenWorkout()}>
+          Start Workout
+        </Button>
+      </div>
+      <div className="mt-6 hidden md:block">
+        <Button type="button" onClick={() => handleOpenWorkout()}>
+          Start Workout
+        </Button>
       </div>
 
       {pickerSectionId && (
