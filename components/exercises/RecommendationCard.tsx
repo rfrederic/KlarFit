@@ -14,14 +14,23 @@ const GOAL_ORDER: TrainingGoal[] = ["strength", "muscleGrowth", "endurance"];
 
 export default function RecommendationCard({ exercise }: { exercise: Exercise }) {
   const [answers, setAnswers] = useState<QuizAnswers | null>(null);
+  // `classifyExerciseType` is a pure function of `exercise`, but Next.js's
+  // static prerender of this "use client" component doesn't reliably match
+  // what the same code computes once it mounts in the browser (observed as
+  // a hydration-mismatch warning on any compound-lift name). Gating the
+  // whole table behind `mounted` guarantees the server-rendered HTML and the
+  // client's first render pass are identical (both show the skeleton), so
+  // there's nothing left to mismatch — the real numbers fill in right after.
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setAnswers(loadQuizAnswers());
+    setMounted(true);
   }, []);
 
   const highlightedGoal = answers ? GOAL_TO_TRAINING_GOAL[answers.goal] : undefined;
-  const recommendations = getRecommendationsForAllGoals(exercise, answers?.experience);
-  const isTimeBased = recommendations.strength.isTimeBased;
+  const recommendations = mounted ? getRecommendationsForAllGoals(exercise, answers?.experience) : null;
+  const isTimeBased = recommendations?.strength.isTimeBased ?? false;
 
   return (
     <section aria-labelledby="recommendation-heading">
@@ -55,7 +64,7 @@ export default function RecommendationCard({ exercise }: { exercise: Exercise })
                     goal === highlightedGoal ? "bg-accent/10" : ""
                   }`}
                 >
-                  {recommendations[goal].sets} &times; {recommendations[goal].reps}
+                  {recommendations ? `${recommendations[goal].sets} × ${recommendations[goal].reps}` : "—"}
                 </td>
               ))}
             </tr>
@@ -65,7 +74,7 @@ export default function RecommendationCard({ exercise }: { exercise: Exercise })
                   key={goal}
                   className={`p-3 text-muted ${goal === highlightedGoal ? "bg-accent/10" : ""}`}
                 >
-                  Rest {recommendations[goal].restLabel}
+                  {recommendations ? `Rest ${recommendations[goal].restLabel}` : "Rest —"}
                 </td>
               ))}
             </tr>
