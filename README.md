@@ -39,7 +39,7 @@ components/
   program/                 DayTabs, ProgramDayView, ProgramSectionCard, ExerciseRow,
                            ExercisePickerModal, SwapAlternateModal, UndoToast
 data/
-  exercises.ts            Single source of truth for all 321 exercises
+  exercises.ts            Single source of truth for all 335 exercises
   defaultProgram.ts       Seed data for My Program (my personal weekly split)
 lib/
   types.ts                Shared TypeScript types
@@ -234,9 +234,9 @@ via each exercise's optional `video` field in `data/exercises.ts` (see
 `components/exercises/ExerciseCard.tsx` for the lazy-loaded autoplay thumbnail and
 `app/exercises/[slug]/page.tsx` for the 16:9 detail-page player).
 
-Separately, the library has grown from real filmed demo clips dropped into `public/exercises/` in two
-batches. As of the most recent sync, **228 of the 321 exercises** have a real filmed clip rather than an
-AI-generated placeholder image — the remaining ~93 are still on placeholder images and are fair game for
+Separately, the library has grown from real filmed demo clips dropped into `public/exercises/` in three
+batches. As of the most recent sync, **266 of the 335 exercises** have a real filmed clip rather than an
+AI-generated placeholder image — the remaining ~69 are still on placeholder images and are fair game for
 either the Kling pipeline above or more real footage using the same filename-matching convention. Run
 `npm run check-media` any time to audit `public/exercises/` against `data/exercises.ts` — it reports
 exercises still missing a clip, flags any video file on disk that isn't referenced by exactly one
